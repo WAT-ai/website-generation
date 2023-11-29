@@ -1,3 +1,6 @@
 images/*
 captions.txt
 .ipynb_checkpoints
+chromedriver.exe
+website-data/*
+ranked_domains.json
