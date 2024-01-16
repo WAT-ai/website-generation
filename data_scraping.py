@@ -10,9 +10,9 @@ screenshot_folder = "website-data/screenshots"
 html_folder = "website-data/html"
 css_folder = "website-data/css"
 
-def get_html_css_from_url(url):
+def get_html_css_from_url(url, timeout=60):
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=timeout)
         response.raise_for_status()  
 
         html_content = response.text
@@ -44,7 +44,8 @@ def take_screenshot(url, screenshot_folder, screenshot_filename):
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
 
-        driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+        # driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+        driver = webdriver.Chrome(options=chrome_options)
 
         driver.get(url)
 
@@ -91,14 +92,15 @@ with open('ranked_domains.json', 'r') as file:
 websites = [f"https://{entry['domain']}" for entry in json_data]
 
 for index, website in enumerate(websites):
-    if index > 50:
-        break
-    html_filename = f"html_{index}.html"
-    css_filename = f"css_{index}.css"
+    if index >= 80:
+    #     break
+        print(index)
+        html_filename = f"html_{index}.html"
+        css_filename = f"css_{index}.css"
 
-    html, css = get_html_css_from_url(website)
+        html, css = get_html_css_from_url(website)
 
-    if html and css:
-        save_to_file(html, html_folder, html_filename)
-        save_to_file(css, css_folder, css_filename)
-        take_screenshot(website, screenshot_folder, f"screenshot_{index}.png")
+        if html and css:
+            save_to_file(html, html_folder, html_filename)
+            save_to_file(css, css_folder, css_filename)
+            take_screenshot(website, screenshot_folder, f"screenshot_{index}.png")

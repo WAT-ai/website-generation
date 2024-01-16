@@ -3,4 +3,6 @@ captions.txt
 .ipynb_checkpoints
 chromedriver.exe
 website-data/*
+venv/*
+chrome-driver/*
 ranked_domains.json
