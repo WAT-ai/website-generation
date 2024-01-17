@@ -92,15 +92,12 @@ with open('ranked_domains.json', 'r') as file:
 websites = [f"https://{entry['domain']}" for entry in json_data]
 
 for index, website in enumerate(websites):
-    if index >= 80:
-    #     break
-        print(index)
-        html_filename = f"html_{index}.html"
-        css_filename = f"css_{index}.css"
+    html_filename = f"html_{index}.txt"
+    css_filename = f"css_{index}.txt"
 
-        html, css = get_html_css_from_url(website)
+    html, css = get_html_css_from_url(website)
 
-        if html and css:
-            save_to_file(html, html_folder, html_filename)
-            save_to_file(css, css_folder, css_filename)
-            take_screenshot(website, screenshot_folder, f"screenshot_{index}.png")
+    if html and css:
+        save_to_file(html, html_folder, html_filename)
+        save_to_file(css, css_folder, css_filename)
+        take_screenshot(website, screenshot_folder, f"screenshot_{index}.png")
