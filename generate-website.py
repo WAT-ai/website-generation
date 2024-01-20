@@ -8,10 +8,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # Get URL
-url = {WEBSITE_GENERATOR_URL}
-xpath = {XPATH_TO_BUTTON}
+#url = {WEBSITE_GENERATOR_URL}
+#xpath = {XPATH_TO_BUTTON}
 out_path = "additional1_domains.json"
-website_out = []
+
+website_list = []
 
 
 def fetch_random_website(url_param, xpath_param):
@@ -47,7 +48,7 @@ def fetch_random_website(url_param, xpath_param):
 
         return driver.current_url
     except Exception as e:
-        print(f"Error fetching website")
+        print(f"Error fetching website: {e}")
         return None
 
 
@@ -56,20 +57,21 @@ def get_website(i):
     if website:
         print(f"index: {i}, website: {website}")
         dictionary = {"position": i, "domain": website}
-        # Save the results to a file
-        with open(out_path, 'w', encoding='utf-8') as out_file:
-            json.dump(website, out_file)
-            out_file.write('\n')
+        website_list.append(dictionary)
 
 
 # Multithreading with ThreadPoolExecutor
-max_threads = 20 * os.cpu_count()
+max_threads = os.cpu_count()
 with concurrent.futures.ThreadPoolExecutor(max_threads) as executor:
     # Submit tasks to the thread pool
-    futures = {executor.submit(get_website, i): i for i in range(20000)}
+    futures = {executor.submit(get_website, i): i for i in range(5)}
 
     # Wait for all threads to finish
     concurrent.futures.wait(futures)
 
-# Sort the results based on the 'position' key
-website_out.sort(key=lambda x: x['position'])
+
+website_list.sort(key=lambda x: x['position'])
+
+with open(out_path, 'w', encoding='utf-8') as out_file:
+    json.dump(website_list, out_file)
+    out_file.write(',\n')

@@ -7,3 +7,4 @@ venv/*
 chrome-driver/*
 ranked_domains.json
 additional_domains.json
+additional1_domains.json
