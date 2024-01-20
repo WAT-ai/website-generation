@@ -6,11 +6,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from threading import Thread
 
 # Get URL
 url = {WEBSITE_GENERATOR_URL}
 xpath = {XPATH_TO_BUTTON}
 out_path = "additional_domains.json"
+website_out = []
 
 
 def fetch_random_website(url_param, xpath_param):
@@ -47,17 +49,14 @@ def fetch_random_website(url_param, xpath_param):
         print(f"Error fetching website")
         return None
 
-
-website_out = []
-
-for i in range(20000):
+def get_website():
     website = fetch_random_website(url, xpath)
     if website:
         # Get rid of stuff at the beginning of the website (https://www. for instance)
         temp_website = website.split('/', 2)
 
         if len(temp_website) < 3:
-            continue
+            return
 
         temp_website = temp_website[2]
 
@@ -65,6 +64,17 @@ for i in range(20000):
 
         dictionary = {"position": i, "domain": temp_website}
         website_out.append(dictionary)
+
+# Multithreading
+thread_list = []
+
+for i in range(20000):
+    filter_thread = Thread(target=get_website, args=())
+    thread_list.append(filter_thread)
+    filter_thread.start()
+
+for thread in thread_list:
+    thread.join()
 
 with open(out_path, 'w', encoding='utf-8') as out_file:
     json.dump(website_out, out_file)

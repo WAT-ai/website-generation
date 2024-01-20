@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from threading import Thread
 from webdriver_manager.chrome import ChromeDriverManager
 
 screenshot_folder = "website-data/screenshots"
@@ -86,18 +87,32 @@ def get_template_websites(url):
         print(f"Error fetching content from {url}: {e}")
         return None
 
-with open('ranked_domains.json', 'r') as file:
-    json_data = json.load(file)
 
-websites = [f"https://{entry['domain']}" for entry in json_data]
-
-for index, website in enumerate(websites):
-    html_filename = f"html_{index}.txt"
-    css_filename = f"css_{index}.txt"
+def get_website_data():
+    html_filename = f"html_add_{index}.txt"
+    css_filename = f"css_add_{index}.txt"
 
     html, css = get_html_css_from_url(website)
 
     if html and css:
         save_to_file(html, html_folder, html_filename)
         save_to_file(css, css_folder, css_filename)
-        take_screenshot(website, screenshot_folder, f"screenshot_{index}.png")
+        take_screenshot(website, screenshot_folder, f"screenshot_add_{index}.png")
+
+
+with open('additional_domains.json', 'r') as file:
+    json_data = json.load(file)
+
+websites = [f"https://{entry['domain']}" for entry in json_data]
+
+
+# Multithreading
+thread_list = []
+
+for index, website in enumerate(websites):
+    website_thread = Thread(target=get_website_data, args=())
+    thread_list.append(website_thread)
+    website_thread.start()
+
+for thread in thread_list:
+    thread.join()
