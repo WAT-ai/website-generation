@@ -1,17 +1,16 @@
+import concurrent.futures
 import os
 import json
-import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from threading import Thread
 
 # Get URL
 url = {WEBSITE_GENERATOR_URL}
 xpath = {XPATH_TO_BUTTON}
-out_path = "additional_domains.json"
+out_path = "additional1_domains.json"
 website_out = []
 
 
@@ -21,6 +20,8 @@ def fetch_random_website(url_param, xpath_param):
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument("--disable-blink-features")
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
         driver = webdriver.Chrome(options=chrome_options)
 
@@ -49,32 +50,26 @@ def fetch_random_website(url_param, xpath_param):
         print(f"Error fetching website")
         return None
 
-def get_website():
+
+def get_website(i):
     website = fetch_random_website(url, xpath)
     if website:
-        # Get rid of stuff at the beginning of the website (https://www. for instance)
-        temp_website = website.split('/', 2)
+        print(f"index: {i}, website: {website}")
+        dictionary = {"position": i, "domain": website}
+        # Save the results to a file
+        with open(out_path, 'w', encoding='utf-8') as out_file:
+            json.dump(website, out_file)
+            out_file.write('\n')
 
-        if len(temp_website) < 3:
-            return
 
-        temp_website = temp_website[2]
+# Multithreading with ThreadPoolExecutor
+max_threads = 20 * os.cpu_count()
+with concurrent.futures.ThreadPoolExecutor(max_threads) as executor:
+    # Submit tasks to the thread pool
+    futures = {executor.submit(get_website, i): i for i in range(20000)}
 
-        print(f"index: {i}, website: {temp_website}")
+    # Wait for all threads to finish
+    concurrent.futures.wait(futures)
 
-        dictionary = {"position": i, "domain": temp_website}
-        website_out.append(dictionary)
-
-# Multithreading
-thread_list = []
-
-for i in range(20000):
-    filter_thread = Thread(target=get_website, args=())
-    thread_list.append(filter_thread)
-    filter_thread.start()
-
-for thread in thread_list:
-    thread.join()
-
-with open(out_path, 'w', encoding='utf-8') as out_file:
-    json.dump(website_out, out_file)
+# Sort the results based on the 'position' key
+website_out.sort(key=lambda x: x['position'])

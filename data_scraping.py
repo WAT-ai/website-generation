@@ -4,12 +4,14 @@ import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import wait
 from webdriver_manager.chrome import ChromeDriverManager
 
 screenshot_folder = "website-data/screenshots"
 html_folder = "website-data/html"
 css_folder = "website-data/css"
+
 
 def get_html_css_from_url(url, timeout=60):
     try:
@@ -39,11 +41,14 @@ def get_html_css_from_url(url, timeout=60):
         print(f"Error fetching content from {url}: {e}")
         return None, None
 
+
 def take_screenshot(url, screenshot_folder, screenshot_filename):
     try:
         chrome_options = Options()
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument("--disable-blink-features")
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 
         # driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
         driver = webdriver.Chrome(options=chrome_options)
@@ -70,6 +75,7 @@ def save_to_file(content, folder, filename):
     except Exception as e:
         print(f"Error saving to file: {e}")
 
+
 def get_template_websites(url):
     try:
         response = requests.get(url)
@@ -88,7 +94,7 @@ def get_template_websites(url):
         return None
 
 
-def get_website_data():
+def get_website_data(website, index):
     html_filename = f"html_add_{index}.txt"
     css_filename = f"css_add_{index}.txt"
 
@@ -103,16 +109,16 @@ def get_website_data():
 with open('additional_domains.json', 'r') as file:
     json_data = json.load(file)
 
-websites = [f"https://{entry['domain']}" for entry in json_data]
+websites = [f"https://{entry['domain']}" if not entry['domain'].startswith(('http://', 'https://')) else entry['domain'] for entry in json_data]
 
+# set the number of threads
+max_threads = min(os.cpu_count(), len(websites))
 
-# Multithreading
-thread_list = []
+# Create a ThreadPoolExecutor with the specified maximum number of threads
+with ThreadPoolExecutor(max_threads) as executor:
+    # Submit tasks to the thread pool
+    futures = {executor.submit(get_website_data, website, i): website for i, website in enumerate(websites)}
 
-for index, website in enumerate(websites):
-    website_thread = Thread(target=get_website_data, args=())
-    thread_list.append(website_thread)
-    website_thread.start()
+    # Wait for all threads to finish
+    wait(futures)
 
-for thread in thread_list:
-    thread.join()
